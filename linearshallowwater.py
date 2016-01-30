@@ -25,25 +25,26 @@ F is a forcing, default = (0, 0, 0)
 
 from __future__ import print_function
 import numpy as np
+import matplotlib.pyplot as plt
 
 ## CONFIGURATION
 ### Domain
 nx = 128
 ny = 129
 
-H  = 10.0          # [m]  Average depth of the fluid
-Lx = 1.5e7          # [m]  Zonal width of domain
-Ly = 1.5e7          # [m]  Meridional height of domain
+H  = 100.0          # [m]  Average depth of the fluid
+Lx = 1.0e7          # [m]  Zonal width of domain
+Ly = 1.0e7          # [m]  Meridional height of domain
 
 boundary_condition = 'periodic'  # other option is 'walls'
 
 ### Coriolis and Gravity
 f0 = 0.0            # [s^-1] f = f0 + beta y
-beta = 2.3e-11      # [s^-1.s^-1]
-g = 1.0             # [m.s^-1]
+beta = 2.0e-11      # [m^-1.s^-1]
+g = 0.1            # [m.s^-1]
 
 ### Diffusion and Friction
-nu = 5.0e-7         # [m^-1.s^-1] Coefficient of diffusion
+nu = 1.0e4          # [m^2.s^-1] Coefficient of diffusion
 r = 1.0e-5          # [Rayleigh damping at top and bottom of domain
 
 dt = 3000.0         # [s]
@@ -54,7 +55,7 @@ dt = 3000.0         # [s]
 #
 # +-- v --+
 # |       |    * (nx, ny)   h points at grid centres
-# u   h  u    * (nx+1, ny) u points on vertical edges  (u[0] and u[nx] are boundary values)
+# u   h   u    * (nx+1, ny) u points on vertical edges  (u[0] and u[nx] are boundary values)
 # |       |    * (nx, ny+1) v points on horizontal edges
 # +-- v --+
 #
@@ -65,9 +66,10 @@ _u = np.zeros((nx+3, ny+2))
 _v = np.zeros((nx+2, ny+3))
 _h = np.zeros((nx+2, ny+2))
 
-u = _u[1:-1, 1:-1]      # (nx+1, ny)
-v = _v[1:-1, 1:-1]      # (nx, ny+1)
-h = _h[1:-1, 1:-1]     # (nx, ny)
+u = _u[1:-1, 1:-1]               # (nx+1, ny)
+v = _v[1:-1, 1:-1]               # (nx, ny+1)
+h = _h[1:-1, 1:-1]               # (nx, ny)
+
 state = np.array([u, v, h])
 
 
@@ -123,10 +125,9 @@ def update_boundaries():
         _h[0, :] = _h[1, :]
         _h[-1, :] = _h[-2, :]
 
-    # This applied for both boundary cases above:
-    # Free-slip of all variables at the top and bottom
+    # This applied for both boundary cases above
     for field in state:
-        # zero deriv y condition
+        # Free-slip of all variables at the top and bottom
         field[:, 0] = field[:, 1]
         field[:, -1] = field[:, -2]
 
@@ -155,7 +156,7 @@ def diff2x(psi):
     The derivative is returned at the same x points as the
     x points of the input array, with dimension (nx-2, ny)."""
     global dx
-    return (psi[:-2, :] - psi[1:-1, :] + psi[2:, :]) / dx**2
+    return (psi[:-2, :] - 2*psi[1:-1, :] + psi[2:, :]) / dx**2
 
 def diff2y(psi):
     """Calculate ∂2/∂y2[psi] over a single grid square.
@@ -165,7 +166,7 @@ def diff2y(psi):
     The derivative is returned at the same y points as the
     y points of the input array, with dimension (nx, ny-2)."""
     global dy
-    return (psi[:, :-2] - psi[:, 1:-1] + psi[:, 2:]) / dy**2
+    return (psi[:, :-2] - 2*psi[:, 1:-1] + psi[:, 2:]) / dy**2
 
 def diffy(psi):
     """Calculate ∂/∂y[psi] over a single grid square.
@@ -201,11 +202,13 @@ def del2(phi):
 
 def uvatuv():
     """Calculate the value of u at v and v at u."""
+    global _u, _v
     ubar = centre_average(_u)[1:-1, :]
     vbar = centre_average(_v)[:, 1:-1]
     return ubar, vbar
 
 def uvath():
+    global u, v
     ubar = x_average(u)
     vbar = y_average(v)
     return ubar, vbar
@@ -218,14 +221,15 @@ def forcing():
     This function should return a state array (du, dv, dh) that will
     be added to the RHS of equations (1), (2) and (3) when
     they are numerically integrated."""
+    global u, v, h
     du = np.zeros_like(u)
     dv = np.zeros_like(v)
     dh = np.zeros_like(h)
     # Calculate some forcing terms here...
     return np.array([du, dv, dh])
 
-sponge_ny = ny//5
-sponge = np.exp(-np.linspace(0, 3, sponge_ny))
+sponge_ny = ny//7
+sponge = np.exp(-np.linspace(0, 5, sponge_ny))
 def damping(var):
     # sponges are active at the top and bottom of the domain by applying Rayleigh friction
     # with exponential decay towards the centre of the domain
@@ -240,7 +244,7 @@ def rhs():
     u_at_v, v_at_u = uvatuv()   # (nx, ny+1), (nx+1, ny)
 
     # the height equation
-    h_rhs = -H*(divergence()) + nu*del2(_h) - r*damping(h)
+    h_rhs = -H*divergence() + nu*del2(_h) - r*damping(h)
 
     # the u equation
     dhdx = diffx(_h)[:, 1:-1]  # (nx+1, ny)
@@ -286,71 +290,61 @@ def step():
     t  += dt
     tc += 1
 
-import matplotlib.pyplot as plt
+
+
+num_levels = 24
+colorlevels = np.concatenate([np.linspace(-1, -.05, num_levels//2), np.linspace(.05, 1, num_levels//2)])
+
 
 timestamps = []
 u_snapshot = []
 
+plt.ion()                       # allow realtime updates to plots
 plt.figure(figsize=(8, 8))
+
 def plot_all(u,v,h):
     global timestamps, u_snapshot
     timestamps.append(t)
     u_snapshot.append(u[:, ny//2].copy())  # add equatorial zonal velocity to u_snapshot
     if len(timestamps) % 2 == 0:
         plt.clf()
-        plt.subplot(221)
-        plt.imshow(u[1:-1, 1:-1].T, cmap=plt.cm.YlGnBu,
-                extent=np.array([ux.min(), ux.max(), uy.min(), uy.max()])/1000)
-        plt.clim(-np.abs(u).max(), np.abs(u).max())
+        plt.subplot(222)
+        X, Y = np.meshgrid(ux, uy)
+        plt.contourf(X/Lx, Y/Ly, u.T, cmap=plt.cm.RdBu, levels=colorlevels*np.max(np.abs(u)))
         plt.title('u')
 
-        plt.subplot(222)
-        plt.imshow(v[1:-1, 1:-1].T, cmap=plt.cm.YlGnBu,
-                extent=np.array([vx.min(), vx.max(), vy.min(), vy.max()])/1000)
-        plt.clim(-np.abs(v).max(), np.abs(v).max())
+        plt.subplot(224)
+        X, Y = np.meshgrid(vx, vy)
+        plt.contourf(X/Lx, Y/Ly, v.T, cmap=plt.cm.RdBu, levels=colorlevels*np.max(np.abs(v)))
         plt.title('v')
 
-        plt.subplot(223)
-        plt.imshow(h[1:-1, 1:-1].T, cmap=plt.cm.RdBu,
-                 extent=np.array([hx.min(), hx.max(), hy.min(), hy.max()])/1000)
-        #plt.pcolormesh(h.T, cmap=plt.cm.RdBu)
-        #plt.xlim(-10, nx+10)
-        #plt.ylim(-10, ny+10)
-        plt.clim(-np.abs(h).max(), np.abs(h).max())
+        plt.subplot(221)
+        X, Y = np.meshgrid(hx, hy)
+        plt.contourf(X/Lx, Y/Ly, h.T, cmap=plt.cm.RdBu, levels=colorlevels)
         plt.title('h')
 
+        plt.subplot(223)
+        plt.plot(hx/Lx, h[:, ny//2], label='equator')
+        plt.plot(hx/Lx, h[:, ny//2+d//2], label='tropics')
+        plt.legend(loc='lower right')
+        plt.ylim(-H*0.01, H*0.01)
+        plt.xlim(-0.5, 0.5)
 
-        plt.subplot(224)
-        c = np.sqrt(g*H)
-        power = np.log(1+ np.abs(np.fft.fft2(np.array(u_snapshot))**2))
+        plt.pause(0.001)
 
-        khat = np.fft.fftshift(np.fft.fftfreq(power.shape[1], 1.0/nx))
-        k = khat / Ly
-
-        omega = np.fft.fftshift(np.fft.fftfreq(power.shape[0], dt))
-        w = omega / np.sqrt(beta*c)
-
-        plt.pcolormesh(khat, w, np.fft.fftshift(power)[::-1], cmap=plt.cm.RdBu)
-        #plt.ylim(0, 20)
-        #plt.xlim(-nx//2, nx//2)
-        plt.title('dispersion')
-        plt.xlabel('k')
-        plt.ylabel('omega')
-        plt.pause(0.01)
 
 
 ## INITIAL CONDITIONS
 # create a single disturbance in the middle of the domain
 # with amplitude 0.01*H
+
 d = 25
 hump = (np.sin(np.linspace(0, np.pi, 2*d))**2)[np.newaxis, :] * (np.sin(np.linspace(0, np.pi, 2*d))**2)[:, np.newaxis]
 h[nx//2-d:nx//2+d, ny//2-d:ny//2+d] = hump*0.01*H
 
-
 for i in range(100000):
     step()
-    if i % 50 == 0:
+    if i % 10 == 0:
 
         plot_all(*state)
         print('[t={:7.2f} h range [{:.2f}, {:.2f}]'.format(t/86400, state[2].min(), state[2].max()))
-
