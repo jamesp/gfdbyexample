@@ -29,7 +29,8 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-experiment = '2d'
+experiment = '2d'           # set to '1d' or '2d'
+plot_interval = 20          # plot every n steps
 
 ## CONFIGURATION
 ### Domain
@@ -40,7 +41,7 @@ H  = 100.0          # [m]  Average depth of the fluid
 Lx = 2.0e7          # [m]  Zonal width of domain
 Ly = 1.0e7          # [m]  Meridional height of domain
 
-boundary_condition = 'walls'  # either 'periodic' or 'walls'
+boundary_condition = 'periodic'  # either 'periodic' or 'walls'
 
 ### Coriolis and Gravity
 f0 = 0.0              # [s^-1] f = f0 + beta y
@@ -350,20 +351,24 @@ def plot_all(u,v,h):
     plt.title('h')
 
     plt.subplot(223)
-    plt.plot(hx/Lx, h[:, ny//2], label='equator')
-    plt.legend(loc='lower right')
+    plt.plot(hx/Lx, h[:, ny//2])
     plt.xlim(-0.5, 0.5)
     plt.ylim(-absmax(h), absmax(h))
+    plt.title('h along x=0')
 
     plt.pause(0.001)
     plt.draw()
 
-def plot_fast(u, v, h):
+im = None
+def plot_fast(u,v,h):
     # only plots an imshow of h, much faster than contour maps
-    plt.clf()
-    plt.subplot(111)
-    plt.imshow(h.T, aspect=Ly/Lx, cmap=plt.cm.RdBu, interpolation='bicubic')
-    plt.clim(-absmax(h), absmax(h))
+    global im
+    if im is None:
+        im = plt.imshow(h.T, aspect=Ly/Lx, cmap=plt.cm.RdBu, interpolation='bicubic')
+        im.set_clim(-absmax(h), absmax(h))
+    else:
+        im.set_array(h.T)
+        im.set_clim(-absmax(h), absmax(h))
     plt.pause(0.001)
     plt.draw()
 
@@ -394,7 +399,6 @@ def plot_geo_adj(u, v, h):
         plt.draw()
 
 plot = plot_all
-
 if experiment is '1d':
     plot = plot_geo_adj
 
@@ -404,7 +408,7 @@ if experiment is '1d':
 c = time.clock()
 for i in range(100000):
     step()
-    if i % 20 == 0:
+    if i % plot_interval == 0:
         plot(*state)
         print('[t={:7.2f} h range [{:.2f}, {:.2f}]'.format(t/86400, state[2].min(), state[2].max()))
         print('fps: %r' % (tc / (time.clock()-c)))
