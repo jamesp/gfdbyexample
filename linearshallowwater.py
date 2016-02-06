@@ -305,14 +305,21 @@ if experiment is '2d':
     gx =  2.0e6
     gy =  0.0
     gr =  2.0e5
-    h[:] = np.exp(-((hx - gx)**2 + (hy - gy)**2)/(2*gr**2))*H*0.01
+    h0 = np.exp(-((hx - gx)**2 + (hy - gy)**2)/(2*gr**2))*H*0.01
+    u0 = u * 0.0
+    v0 = v * 0.0
+
 if experiment is '1d':
     h0 = -np.tanh(100*hx/Lx)
     v0 = v * 0.0
     u0 = u * 0.0
-    h[:] = h0
-    # no damping in y direction, but damp velocity fields as they go to +/- Lx
+    # no damping in y direction
     r = 0.0
+
+# set the variable fields to the initial conditions
+u[:] = u0
+v[:] = v0
+h[:] = h0
 
 ## PLOTTING
 # Create several functions for displaying current state of the simulation
@@ -387,6 +394,7 @@ def plot_geo_adj(u, v, h):
         plt.draw()
 
 plot = plot_all
+
 if experiment is '1d':
     plot = plot_geo_adj
 
