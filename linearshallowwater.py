@@ -29,7 +29,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-experiment = '1d'
+experiment = '2d'
 
 ## CONFIGURATION
 ### Domain
@@ -43,13 +43,13 @@ Ly = 1.0e7          # [m]  Meridional height of domain
 boundary_condition = 'walls'  # either 'periodic' or 'walls'
 
 ### Coriolis and Gravity
-f0 = 15.0e-6           # [s^-1] f = f0 + beta y
+f0 = 0.0              # [s^-1] f = f0 + beta y
 beta =  0.0           # [m^-1.s^-1]
 g = 1.0               # [m.s^-1]
 
 ### Diffusion and Friction
 nu = 5.0e4          # [m^2.s^-1] Coefficient of diffusion
-r = 1.0e-4          # [Rayleigh damping at top and bottom of domain
+r = 1.0e-4          # Rayleigh damping at top and bottom of domain
 
 dt = 1000.0         # [s]
 
@@ -307,15 +307,18 @@ if experiment is '2d':
     gr =  2.0e5
     h[:] = np.exp(-((hx - gx)**2 + (hy - gy)**2)/(2*gr**2))*H*0.01
 if experiment is '1d':
-    h[:] = np.tanh(hx)*0.5
+    h0 = -np.tanh(100*hx/Lx)
+    v0 = v * 0.0
+    u0 = u * 0.0
+    h[:] = h0
+    # no damping in y direction, but damp velocity fields as they go to +/- Lx
     r = 0.0
-
 
 ## PLOTTING
 # Create several functions for displaying current state of the simulation
 # Only one is used at a time - this is assigned to `plot`
 plt.ion()                         # allow realtime updates to plots
-plt.figure(figsize=(8*Lx/Ly, 8))  # create a figure with correct aspect ratio
+fig = plt.figure(figsize=(8*Lx/Ly, 8))  # create a figure with correct aspect ratio
 
 # create a set of color levels with a slightly larger neutral zone about 0
 nc = 12
@@ -358,12 +361,30 @@ def plot_fast(u, v, h):
     plt.draw()
 
 def plot_geo_adj(u, v, h):
-    plt.clf()
-    plt.subplot(111)
-    plt.imshow(h.T, aspect=Ly/Lx, cmap=plt.cm.RdBu, interpolation='bicubic')
-    plt.clim(-absmax(h), absmax(h))
-    plt.pause(0.001)
-    plt.draw()
+        plt.clf()
+
+        h0max = absmax(h0)
+        plt.subplot(311)
+        plt.plot(hx, h[:, ny//2], 'b', linewidth=2)
+        plt.plot(hx, h0[:], 'r--', linewidth=1,)
+        plt.ylabel('height')
+        plt.ylim(-h0max*1.2, h0max*1.2)
+
+        plt.subplot(312)
+        plt.plot(vx, v[:, ny//2].T, linewidth=2)
+        plt.plot(vx, v0[:, ny//2], 'r--', linewidth=1,)
+        plt.ylabel('v velocity')
+        plt.ylim(-h0max*.12, h0max*.12)
+
+        plt.subplot(313)
+        plt.plot(ux, u[:, ny//2], linewidth=2)
+        plt.plot(ux, u0[:, ny/2], 'r--', linewidth=1,)
+        plt.xlabel('x/L$_\mathsf{d}$',size=16)
+        plt.ylabel('u velocity')
+        plt.ylim(-h0max*.12, h0max*.12)
+
+        plt.pause(0.001)
+        plt.draw()
 
 plot = plot_all
 if experiment is '1d':
@@ -372,11 +393,10 @@ if experiment is '1d':
 
 ## RUN
 # Run the simulation and plot the state
-
 c = time.clock()
 for i in range(100000):
     step()
-    if i % 100 == 0:
+    if i % 20 == 0:
         plot(*state)
         print('[t={:7.2f} h range [{:.2f}, {:.2f}]'.format(t/86400, state[2].min(), state[2].max()))
         print('fps: %r' % (tc / (time.clock()-c)))
