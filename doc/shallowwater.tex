@@ -22,6 +22,8 @@
 \setkeys{Gin}{width=\linewidth,totalheight=\textheight,keepaspectratio}
 \graphicspath{{images/}} % set of paths to search for images
 
+\usepackage{minted}
+
 % % bibliography
 % \usepackage[square, numbers]{natbib}
 
@@ -44,15 +46,35 @@
   where fluid height $\eta = H + h$ and Coriolis parameter $f=f_0 + \beta y$.
 
   The partial derivatives in space are approximated by a first-order central
-  difference method, timestepping is performed using a linear-multistep method,
+  difference method and timestepping is performed using a linear-multistep method,
   the three-step Adams-Bashforth method.
-  \ref{sec:appendixa} details the numerical methods used.
+  Appendix A \ref{sec:appendixa} details the numerical methods used.
 
   \section{Experiments}
   \label{sec:Experiments}
 
   \subsection{Experiment 1}
   \label{sub:Experiment 1}
+
+  \begin{itemize}
+    \item Download the python script \texttt{linearshallowwater.py} from the
+    course website\footnote{\url{http://empslocal.ex.ac.uk/people/staff/gv219/ecmm719/index.html}}.
+    \item Set \texttt{experiment = '2d'} and run the code from the command line.
+    \begin{minted}[mathescape]{bash}
+      $ cd Downloads
+      $ python linearshallowwater.py
+    \end{minted}
+    \item You should see the case for a non-rotating fluid begin to run on
+    your screen.  The height field is set with an initial condition of a small
+    gaussian added to one point in the field.  As the equations evolve $u$ and
+    $v$ velocities are induced and the gravity waves radiate outwards.
+    \begin{marginfigure}
+      \includegraphics{gravity_waves}
+      \caption{Gravity waves propagating away from an initial disturbance.}
+      \label{fig:gravwaves}
+    \end{marginfigure}
+    \item Fin
+  \end{itemize}
 
   \section{Appendix A: Numerics}
   \label{sec:appendixa}
