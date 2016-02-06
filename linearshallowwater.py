@@ -24,8 +24,12 @@ F is a forcing, default = (0, 0, 0)
 """
 
 from __future__ import print_function
+import time
+
 import numpy as np
 import matplotlib.pyplot as plt
+
+experiment = '1d'
 
 ## CONFIGURATION
 ### Domain
@@ -33,21 +37,21 @@ nx = 128
 ny = 129
 
 H  = 100.0          # [m]  Average depth of the fluid
-Lx = 1.0e7          # [m]  Zonal width of domain
+Lx = 2.0e7          # [m]  Zonal width of domain
 Ly = 1.0e7          # [m]  Meridional height of domain
 
-boundary_condition = 'periodic'  # other option is 'walls'
+boundary_condition = 'walls'  # either 'periodic' or 'walls'
 
 ### Coriolis and Gravity
-f0 = 0.0            # [s^-1] f = f0 + beta y
-beta = 2.0e-11      # [m^-1.s^-1]
-g = 0.1            # [m.s^-1]
+f0 = 15.0e-6           # [s^-1] f = f0 + beta y
+beta =  0.0           # [m^-1.s^-1]
+g = 1.0               # [m.s^-1]
 
 ### Diffusion and Friction
-nu = 1.0e4          # [m^2.s^-1] Coefficient of diffusion
-r = 1.0e-5          # [Rayleigh damping at top and bottom of domain
+nu = 5.0e4          # [m^2.s^-1] Coefficient of diffusion
+r = 1.0e-4          # [Rayleigh damping at top and bottom of domain
 
-dt = 3000.0         # [s]
+dt = 1000.0         # [s]
 
 
 ## GRID
@@ -213,6 +217,8 @@ def uvath():
     vbar = y_average(v)
     return ubar, vbar
 
+def absmax(psi):
+    return np.max(np.abs(psi))
 
 ## DYNAMICS
 # These functions calculate the dynamics of the system we are interested in
@@ -291,60 +297,70 @@ def step():
     tc += 1
 
 
-
+# create a set of color levels with a slightly larger neutral zone about 0
 num_levels = 24
-colorlevels = np.concatenate([np.linspace(-1, -.05, num_levels//2), np.linspace(.05, 1, num_levels//2)])
-
-
-timestamps = []
-u_snapshot = []
+colorlevels = np.concatenate([
+                    np.linspace(-1, -.05, num_levels//2),
+                    np.linspace(.05, 1, num_levels//2)
+                    ])
 
 plt.ion()                       # allow realtime updates to plots
-plt.figure(figsize=(8, 8))
+plt.figure(figsize=(8*Lx/Ly, 8))
 
 def plot_all(u,v,h):
-    global timestamps, u_snapshot
-    timestamps.append(t)
-    u_snapshot.append(u[:, ny//2].copy())  # add equatorial zonal velocity to u_snapshot
-    if len(timestamps) % 2 == 0:
-        plt.clf()
-        plt.subplot(222)
-        X, Y = np.meshgrid(ux, uy)
-        plt.contourf(X/Lx, Y/Ly, u.T, cmap=plt.cm.RdBu, levels=colorlevels*np.max(np.abs(u)))
-        plt.title('u')
+    hmax = np.max(np.abs(h))
+    plt.clf()
+    plt.subplot(222)
+    X, Y = np.meshgrid(ux, uy)
+    plt.contourf(X/Lx, Y/Ly, u.T, cmap=plt.cm.RdBu, levels=colorlevels*absmax(u))
+    plt.title('u')
 
-        plt.subplot(224)
-        X, Y = np.meshgrid(vx, vy)
-        plt.contourf(X/Lx, Y/Ly, v.T, cmap=plt.cm.RdBu, levels=colorlevels*np.max(np.abs(v)))
-        plt.title('v')
+    plt.subplot(224)
+    X, Y = np.meshgrid(vx, vy)
+    plt.contourf(X/Lx, Y/Ly, v.T, cmap=plt.cm.RdBu, levels=colorlevels*absmax(v))
+    plt.title('v')
 
-        plt.subplot(221)
-        X, Y = np.meshgrid(hx, hy)
-        plt.contourf(X/Lx, Y/Ly, h.T, cmap=plt.cm.RdBu, levels=colorlevels)
-        plt.title('h')
+    plt.subplot(221)
+    X, Y = np.meshgrid(hx, hy)
+    plt.contourf(X/Lx, Y/Ly, h.T, cmap=plt.cm.RdBu, levels=colorlevels*absmax(h))
+    plt.title('h')
 
-        plt.subplot(223)
-        plt.plot(hx/Lx, h[:, ny//2], label='equator')
-        plt.plot(hx/Lx, h[:, ny//2+d//2], label='tropics')
-        plt.legend(loc='lower right')
-        plt.ylim(-H*0.01, H*0.01)
-        plt.xlim(-0.5, 0.5)
+    plt.subplot(223)
+    plt.plot(hx/Lx, h[:, ny//2], label='equator')
+    plt.legend(loc='lower right')
+    plt.xlim(-0.5, 0.5)
+    plt.ylim(-absmax(h), absmax(h))
 
-        plt.pause(0.001)
+    plt.pause(0.001)
+    plt.draw()
 
-
+def plot_fast(u, v, h):
+    # only plots an imshow of h, much faster than contour maps
+    plt.clf()
+    plt.subplot(111)
+    plt.imshow(h.T, aspect=Ly/Lx, cmap=plt.cm.RdBu, interpolation='bicubic')
+    plt.clim(-absmax(h), absmax(h))
+    plt.pause(0.001)
+    plt.draw()
 
 ## INITIAL CONDITIONS
-# create a single disturbance in the middle of the domain
-# with amplitude 0.01*H
 
-d = 25
-hump = (np.sin(np.linspace(0, np.pi, 2*d))**2)[np.newaxis, :] * (np.sin(np.linspace(0, np.pi, 2*d))**2)[:, np.newaxis]
-h[nx//2-d:nx//2+d, ny//2-d:ny//2+d] = hump*0.01*H
+if experiment is '2d':
+    # create a single disturbance in the domain:
+    # a gaussian at position gx, gy, with radius gr
+    gx =  2.0e6
+    gy =  0.0
+    gr =  2.0e5
+    h[:] = np.exp(-((hx - gx)**2 + (hy - gy)**2)/(2*gr**2))*H*0.01
+if experiment is '1d':
+    h[:, :] = np.tanh(hx)*0.5
+    r = 0.0
 
+c = time.clock()
 for i in range(100000):
     step()
     if i % 10 == 0:
-
         plot_all(*state)
+        #plot_fast(*state)
         print('[t={:7.2f} h range [{:.2f}, {:.2f}]'.format(t/86400, state[2].min(), state[2].max()))
+        print('fps: %r' % (tc / (time.clock()-c)))
