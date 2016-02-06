@@ -55,7 +55,7 @@ dt = 1000.0         # [s]
 
 
 ## GRID
-# Setup the Arakawa-C Grid
+# Setup the Arakawa-C Grid:
 #
 # +-- v --+
 # |       |    * (nx, ny)   h points at grid centres
@@ -220,6 +220,7 @@ def uvath():
 def absmax(psi):
     return np.max(np.abs(psi))
 
+
 ## DYNAMICS
 # These functions calculate the dynamics of the system we are interested in
 def forcing():
@@ -262,7 +263,6 @@ def rhs():
 
     return np.array([u_rhs, v_rhs, h_rhs]) + forcing()
 
-
 _ppdstate, _pdstate = 0,0
 def step():
     global dt, t, tc, _ppdstate, _pdstate
@@ -297,15 +297,29 @@ def step():
     tc += 1
 
 
-# create a set of color levels with a slightly larger neutral zone about 0
-num_levels = 24
-colorlevels = np.concatenate([
-                    np.linspace(-1, -.05, num_levels//2),
-                    np.linspace(.05, 1, num_levels//2)
-                    ])
+## INITIAL CONDITIONS
+# Set the initial state of the model here by assigning to u[:], v[:] and h[:].
+if experiment is '2d':
+    # create a single disturbance in the domain:
+    # a gaussian at position gx, gy, with radius gr
+    gx =  2.0e6
+    gy =  0.0
+    gr =  2.0e5
+    h[:] = np.exp(-((hx - gx)**2 + (hy - gy)**2)/(2*gr**2))*H*0.01
+if experiment is '1d':
+    h[:] = np.tanh(hx)*0.5
+    r = 0.0
 
-plt.ion()                       # allow realtime updates to plots
-plt.figure(figsize=(8*Lx/Ly, 8))
+
+## PLOTTING
+# Create several functions for displaying current state of the simulation
+# Only one is used at a time - this is assigned to `plot`
+plt.ion()                         # allow realtime updates to plots
+plt.figure(figsize=(8*Lx/Ly, 8))  # create a figure with correct aspect ratio
+
+# create a set of color levels with a slightly larger neutral zone about 0
+nc = 12
+colorlevels = np.concatenate([np.linspace(-1, -.05, nc), np.linspace(.05, 1, nc)])
 
 def plot_all(u,v,h):
     hmax = np.max(np.abs(h))
@@ -343,24 +357,26 @@ def plot_fast(u, v, h):
     plt.pause(0.001)
     plt.draw()
 
-## INITIAL CONDITIONS
+def plot_geo_adj(u, v, h):
+    plt.clf()
+    plt.subplot(111)
+    plt.imshow(h.T, aspect=Ly/Lx, cmap=plt.cm.RdBu, interpolation='bicubic')
+    plt.clim(-absmax(h), absmax(h))
+    plt.pause(0.001)
+    plt.draw()
 
-if experiment is '2d':
-    # create a single disturbance in the domain:
-    # a gaussian at position gx, gy, with radius gr
-    gx =  2.0e6
-    gy =  0.0
-    gr =  2.0e5
-    h[:] = np.exp(-((hx - gx)**2 + (hy - gy)**2)/(2*gr**2))*H*0.01
+plot = plot_all
 if experiment is '1d':
-    h[:, :] = np.tanh(hx)*0.5
-    r = 0.0
+    plot = plot_geo_adj
+
+
+## RUN
+# Run the simulation and plot the state
 
 c = time.clock()
 for i in range(100000):
     step()
-    if i % 10 == 0:
-        plot_all(*state)
-        #plot_fast(*state)
+    if i % 100 == 0:
+        plot(*state)
         print('[t={:7.2f} h range [{:.2f}, {:.2f}]'.format(t/86400, state[2].min(), state[2].max()))
         print('fps: %r' % (tc / (time.clock()-c)))
