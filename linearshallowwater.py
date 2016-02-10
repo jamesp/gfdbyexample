@@ -42,6 +42,8 @@ Lx = 2.0e7          # [m]  Zonal width of domain
 Ly = 1.0e7          # [m]  Meridional height of domain
 
 boundary_condition = 'periodic'  # either 'periodic' or 'walls'
+if experiment is '1d':
+    boundary_condition = 'walls'
 
 ### Coriolis and Gravity
 f0 = 0.0              # [s^-1] f = f0 + beta y
@@ -52,7 +54,7 @@ g = 1.0               # [m.s^-1]
 nu = 5.0e4          # [m^2.s^-1] Coefficient of diffusion
 r = 1.0e-4          # Rayleigh damping at top and bottom of domain
 
-dt = 1000.0         # [s]
+dt = 1000.0         # Timestep [s]
 
 
 ## GRID
@@ -338,16 +340,19 @@ def plot_all(u,v,h):
     plt.subplot(222)
     X, Y = np.meshgrid(ux, uy)
     plt.contourf(X/Lx, Y/Ly, u.T, cmap=plt.cm.RdBu, levels=colorlevels*absmax(u))
+    #plt.colorbar()
     plt.title('u')
 
     plt.subplot(224)
     X, Y = np.meshgrid(vx, vy)
     plt.contourf(X/Lx, Y/Ly, v.T, cmap=plt.cm.RdBu, levels=colorlevels*absmax(v))
+    #plt.colorbar()
     plt.title('v')
 
     plt.subplot(221)
     X, Y = np.meshgrid(hx, hy)
     plt.contourf(X/Lx, Y/Ly, h.T, cmap=plt.cm.RdBu, levels=colorlevels*absmax(h))
+    #plt.colorbar()
     plt.title('h')
 
     plt.subplot(223)
@@ -410,5 +415,9 @@ for i in range(100000):
     step()
     if i % plot_interval == 0:
         plot(*state)
-        print('[t={:7.2f} h range [{:.2f}, {:.2f}]'.format(t/86400, state[2].min(), state[2].max()))
-        print('fps: %r' % (tc / (time.clock()-c)))
+        print('[t={:7.2f} u: [{:.3f}, {:.3f}], v: [{:.3f}, {:.3f}], h: [{:.3f}, {:.2f}]'.format(
+            t/86400,
+            u.min(), u.max(),
+            v.min(), v.max(),
+            h.min(), h.max()))
+        #print('fps: %r' % (tc / (time.clock()-c)))
