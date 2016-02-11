@@ -68,9 +68,8 @@
   The two main choices are Enthought Canopy and Contiuum Anaconda.
   I use and recommend Anaconda; installing the latest version from the Continuum website \footnote{\url{https://www.continuum.io/downloads}} will give you the latest release of Python along with the most popular libraries \footnote{Notably \texttt{numpy}, \texttt{scipy}, \texttt{pandas}, \texttt{matplotlib}, \texttt{sympy} and \texttt{ipython}.  These six libraries will solve 99\% of your numerical, statistical and dataprocessing needs.
   A full list of included packages can be found at \url{http://docs.continuum.io/anaconda/pkg-docs}.}.
-  Once the installer has been run, open a new terminal or command prompt window and you should have access to the new version of Python.
 
-  A standard text editor such a Notepad is all that is required to edit the code, but not a \emph{word processor} like Microsoft Word.
+  A standard text editor such as Notepad is all that is required to edit the code, but not a \emph{word processor} like Microsoft Word.
   While Notepad is sufficient, there are many more powerful text editors available that make writing code a much more pleasant experience.
   Atom  \footnote{\url{https://atom.io/}} is a free, cross-platform option text editor with good support for Python.
 
@@ -80,7 +79,7 @@
   \subsection{Experiment 1: Geostrophic Balance in 1-D}
   \label{sub:exp1}
 
-  An introduction to the code.  By the end you will have run an example of geostrophic adjustment in one dimension and have an understanding of how the code can be changed.
+  % An introduction to the code.  By the end you will have run an example of geostrophic adjustment in one dimension and have an understanding of how the code can be changed.
 
   The first experiment demonstrates geostrophic adjustment in one dimension.
   There is no variation in the y-direction; the system that is being modelled is
@@ -132,15 +131,15 @@
       \begin{equation*}
         h_0 = \cos^n(\pi \cdot x / L_x)
       \end{equation*}
-      where you can increase $n$ to get a more isolated hump.
+      and increase $n$ to get a more isolated hump.
     \end{itemize}
   \end{itemize}
 
-
+  \pagebreak
   \subsection{Experiment 2: Geostrophic Adjustment in 2-D}
   \label{sub:exp2}
   We'll now consider the two-dimensional case where derivatives $\dd{}{y} \ne 0$ in general.
-  So the system (\ref{eqn:sw}) will be solved in full.
+  The system (\ref{eqn:sw}) will be solved in full.
   \begin{itemize}
     \item Make the following changes and run the code from the command line.
     \begin{minted}{python}
@@ -175,7 +174,7 @@ f0 = 0.0             # line 49
 \label{sub:advanced}
   The code is quite versatile and capable of creating some other interesting dynamics.
   Here are a few more experiments you can try.
-  These examples go beyond the scope of ECMM719; if you are interested further information of equatorial waves can be found in the Second Edition material for the Atmospheric and Oceanic Fluid Dynamics book under the section \emph{Waves on the Equatorial Beta Plane} \cite{Vallis:2015wb}.
+  These examples go beyond the scope of ECMM719; if you are interested, further information of equatorial waves can be found in the Second Edition material for the Atmospheric and Oceanic Fluid Dynamics book under the section \emph{Waves on the Equatorial Beta Plane} \cite{Vallis:2015wb}.
     \begin{itemize}
       \item Coastal Kelvin Waves on the East Pacific coast.
       \begin{minted}{python}
@@ -203,7 +202,7 @@ gr =  1.5e6                       # line 310
   \label{sec:appendixa}
 
   \noindent This is a \emph{very} brief overview of the numerics used to implement the model.
-  If you are interested in learning more about numerical methods in GFD, Dale Durran's book is an excellent resource \cite{Durran:2010hy}.
+  Dale Durran's book \cite{Durran:2010hy} is an excellent resource for learning more about numerical methods in GFD.
 
   If you are interested in using this code to model a specific problem, there is an up-to-date customisable version online \footnote{\url{https://github.com/jamesp/shallowwater}}.
   This repository has both the linear model and a fully nonlinear model of the shallow water equations.
