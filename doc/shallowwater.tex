@@ -2,7 +2,7 @@
 
 \documentclass[a4paper, sfsidenotes, twoside]{tufte-handout}
 
-\author{James Penn}
+%\author{James Penn}
 \title{A Shallow Water Model}
 
 
@@ -47,11 +47,14 @@
     \label{fig:shallow}
   \end{marginfigure}
   These are
-  \begin{align}
-    \dd{u}{t} - fv &= - g \dd{h}{x} \\
-    \dd{v}{t} + fu &= - g \dd{h}{y} \\
-    \dd{h}{t} + H(\dd{u}{x} + \dd{v}{y}) &= 0
-  \end{align}
+  \begin{subequations}
+    \label{eqn:sw}
+    \begin{align}
+      \dd{u}{t} - fv &= - g \dd{h}{x} \\
+      \dd{v}{t} + fu &= - g \dd{h}{y} \\
+      \dd{h}{t} + H(\dd{u}{x} + \dd{v}{y}) &= 0
+    \end{align}
+  \end{subequations}
   where fluid height $\eta = H + h$ and Coriolis parameter $f=f_0 + \beta y$.
 
   The partial derivatives in space are approximated by a first-order central
@@ -92,13 +95,14 @@
   The intial conditions and constants are set
   \begin{align*}
     L_x &= \num{2e7} & H &= \num{100} & f &= \num{1e-5} & g &= \num{1} \\
-    u(0) &= 0  & v(0) &= 0 & h(0) &= \tanh(100 \cdot x / L_x)
+    u_0 &= 0  & v_0 &= 0 & h_0 &= \tanh(100 \cdot x / L_x)
   \end{align*}
   and the code is allowed to evolve in time, taking a timestep $\Delta t = 1000$.
   \marginnote[-4em]{The code does not assume any units, but here the choice of constants scales the problem to be in [m] and [s].}
   \begin{itemize}
     \item Download the python script \texttt{linearshallowwater.py} from the
     course website \footnote{\url{http://empslocal.ex.ac.uk/people/staff/gv219/ecmm719/index.html}}.
+    \textbf{If at any point you have changed several things, something goes really wrong and you can't get the code to run anymore, just go back to the course website and download a new copy.  You are encouraged to experiment and try new things!}
     \item Open a terminal (Mac/Linux) or command prompt (Windows), change directory to the location of the saved file and run it with the \texttt{python} command.
     \begin{minted}[mathescape]{bash}
       $ cd Downloads
@@ -118,18 +122,26 @@
     \begin{itemize}
       \item Set $f \gg \num{1e-5}$ and $f = \num{0}$. What happens in each of these cases? What happens to the gravity waves that radiate outwards?
       \item If you want to see the simulation run longer, increase \texttt{nsteps} (found at around line \texttt{414}).
+      \item (Advanced) The initial conditions for this experiment are set around line \texttt{315}.
+      Try using a condition
+      \begin{equation*}
+        h_0 = \cos^n(\pi \cdot x / L_x)
+      \end{equation*}
+      where you can increase $n$ to get a more isolated hump.
     \end{itemize}
   \end{itemize}
 
 
-
-
   \subsection{Experiment 2: Gravity Waves in 2-D}
   \label{sub:exp2}
-  Consider now the two-dimensional
-    \begin{itemize}
-    \item Set \texttt{experiment = '2d'} and run the code from the command line.
-
+  We'll now consider the two-dimensional case where derivatives $\dd{}{y} \ne 0$ in general.
+  So the system (\ref{eqn:sw}) will be solved in full.
+  \begin{itemize}
+    \item Make the following changes and run the code from the command line.
+    \begin{minted}{python}
+experiment = '2d'    # line 32
+f0 = 0.0             # line 49
+    \end{minted}
     \item You should see the case for a non-rotating fluid begin to run on
     your screen.  The height field is set with an initial condition of a small
     gaussian added to one point in the field.  As the equations evolve $u$ and
@@ -141,7 +153,14 @@
     \end{marginfigure}
     \item Try changing the parameters of the code and see what happens.
     \begin{itemize}
-      \item Set the boundaries to 'walls'
+      \item (Advanced) Coastal Kelvin Waves on the East coast
+      \begin{minted}{python}
+Ly = 2.0e7                    # line 42
+boundary_condition = 'walls'  # line 44
+f0 = 0.0                      # line 49
+beta =  2.0e-11               # line 50
+      \end{minted}
+      You may need to increase \texttt{nsteps} to see a longer simulation.
     \end{itemize}
   \end{itemize}
 
