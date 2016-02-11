@@ -82,8 +82,8 @@
 
   An introduction to the code.  By the end you will have run an example of geostrophic adjustment in one dimension and have an understanding of how the code can be changed.
 
-  The first experiment shows demonstrates geostrophic adjustment in one dimension.
-  There is no variation in the y-direction and the system that is being modelled is
+  The first experiment demonstrates geostrophic adjustment in one dimension.
+  There is no variation in the y-direction; the system that is being modelled is
   \begin{subequations}
     \begin{align}
       \dd{u}{t} &= fv - g \dd{h}{x} \\
@@ -120,7 +120,12 @@
     \end{itemize}
     \item Once you've got the code running, try changing some of the constants and see what happens.
     \begin{itemize}
-      \item Set $f \gg \num{1e-5}$ and $f = \num{0}$. What happens in each of these cases? What happens to the gravity waves that radiate outwards?
+      \item Set $f \gg \num{1e-5}$ and $f = \num{0.0}$.
+      \begin{enumerate}
+        \item What is happening in each of these cases?
+        \item What happens to the gravity waves that radiate outwards?
+        \item What is the problem with this numerical model compared with the analytic solution? \emph{Hint: boundary conditions.}
+      \end{enumerate}
       \item If you want to see the simulation run longer, increase \texttt{nsteps} (found at around line \texttt{414}).
       \item (Advanced) The initial conditions for this experiment are set around line \texttt{315}.
       Try using a condition
@@ -132,7 +137,7 @@
   \end{itemize}
 
 
-  \subsection{Experiment 2: Gravity Waves in 2-D}
+  \subsection{Experiment 2: Geostrophic Adjustment in 2-D}
   \label{sub:exp2}
   We'll now consider the two-dimensional case where derivatives $\dd{}{y} \ne 0$ in general.
   So the system (\ref{eqn:sw}) will be solved in full.
@@ -145,15 +150,34 @@ f0 = 0.0             # line 49
     \item You should see the case for a non-rotating fluid begin to run on
     your screen.  The height field is set with an initial condition of a small
     gaussian added to one point in the field.  As the equations evolve $u$ and
-    $v$ velocities are induced and the gravity waves radiate outwards.
+    $v$ velocities are induced and gravity waves radiate outwards from the initial disturbance.
+    \begin{enumerate}
+      \item Where on the Earth is $f_0 = 0$?
+      \item (Advanced) What speed do you expect the gravity waves to be propagating at in this model?
+    \end{enumerate}
     \begin{marginfigure}
       \includegraphics{gravity_waves}
       \caption{Gravity waves propagating away from an initial disturbance.}
       \label{fig:gravwaves}
     \end{marginfigure}
-    \item Try changing the parameters of the code and see what happens.
+    \item Now try changing the Coriolis parameter to be something similar to that experienced in the mid-latitudes.
+    \begin{enumerate}
+      \item Change the value of $f_0$ back to $\num{1e-5}$ and rerun the two-dimensional case to compare with the irrotational version.
+      \begin{enumerate}
+        \item What happens to the gravity waves?
+        \item What happens to the initial condition?
+      \end{enumerate}
+      \item Increase $f_0$ further.  What happens to the amplitude of the gravity waves as $f_0$ increases?
+    \end{enumerate}
+  \end{itemize}
+
+\subsection{Advanced Experiments}
+\label{sub:advanced}
+  The code is quite versatile and capable of creating some other interesting dynamics.
+  Here are a few more experiments you can try.
+  These examples go beyond the scope of ECMM719; if you are interested further information of equatorial waves can be found in the Second Edition material for the Atmospheric and Oceanic Fluid Dynamics book under the section \emph{Waves on the Equatorial Beta Plane} \cite{Vallis:2015wb}.
     \begin{itemize}
-      \item (Advanced) Coastal Kelvin Waves on the East coast
+      \item Coastal Kelvin Waves on the East Pacific coast.
       \begin{minted}{python}
 Ly = 2.0e7                    # line 42
 boundary_condition = 'walls'  # line 44
@@ -161,8 +185,19 @@ f0 = 0.0                      # line 49
 beta =  2.0e-11               # line 50
       \end{minted}
       You may need to increase \texttt{nsteps} to see a longer simulation.
+
+      As the initial height field decays, an \emph{equatorial Kelvin wave} moves Eastward.  When it reaches the boundary, it becomes a \emph{coastal Kelvin wave}.
+    \item Equatorial Kelvin and Rossby waves.
+          \begin{minted}{python}
+boundary_condition = 'periodic'   # line 44
+f0 = 0.0                          # line 49
+beta =  2.0e-11                   # line 50
+gr =  1.5e6                       # line 310
+          \end{minted}
+        \texttt{gr} specifies the radius of the disturbance in the height field.
+        Here it is made bigger to be of order of the \emph{Rossby Deformation Radius} $L_d = \frac{\sqrt{gH}}{\beta}$.
+      An equatorial Kelvin wave travels eastward along the equator, while two, slower moving, Rossby waves move westward in the tropics.
     \end{itemize}
-  \end{itemize}
 
   \section{Appendix A: Numerics}
   \label{sec:appendixa}
