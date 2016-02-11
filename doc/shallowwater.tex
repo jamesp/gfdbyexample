@@ -39,6 +39,14 @@
 
   \section{Introduction}
   \label{sec:Introduction}
+
+  \marginnote[-4em]{Contact me:
+
+\textbf{James Penn}
+
+\url{jp492@exeter.ac.uk}
+
+Harrison 319}
   The Python code \texttt{linearshallowwater.py} models the linearised shallow
   water equations on the beta plane.
   \begin{marginfigure}[1in]
@@ -90,12 +98,12 @@
   \end{subequations}
   Given some initial conditions and sensible values for $g$, $H$ and $f$ the system will be solved numerically.
   The intial conditions and constants are set
+  \marginnote[1.5em]{The code does not assume any units, but here the choice of constants scales the problem to be in [m] and [s].}
   \begin{align*}
     L_x &= \num{2e7} & H &= \num{100} & f &= \num{1e-5} & g &= \num{1} \\
     u_0 &= 0  & v_0 &= 0 & h_0 &= \tanh(100 \cdot x / L_x)
   \end{align*}
   and the code is allowed to evolve in time, taking a timestep $\Delta t = 1000$.
-  \marginnote[-4em]{The code does not assume any units, but here the choice of constants scales the problem to be in [m] and [s].}
   \begin{itemize}
     \item Download the python script \texttt{linearshallowwater.py} from the
     course website \footnote{\url{http://empslocal.ex.ac.uk/people/staff/gv219/ecmm719/index.html}}.
@@ -231,9 +239,9 @@ gr =  1.5e6                       # line 310
   The time stepping forward is achieved using a linear-multistep method.
   Once the spatial derivatives have been approximated using the central difference method, the system can be considered an initial value problem of the form $ \diff{y}{t} = f(t, y) $.
   The three-step Adams-Bashforth multistep time integration method is given by \cite{Parker:2012ii}
-  \begin{align}
-    y_{n+3} &= y_{n+2} + \Delta t \left( \frac{23}{12} f(t_{n+2}, y_{n+2}) - \frac{4}{3} f(t_{n+1}, y_{n+1}) + \frac{5}{12}f(t_n, y_n)\right) \\
-  \end{align}
+  \begin{equation}
+    y_{n+3} = y_{n+2} + \Delta t \left( \frac{23}{12} f(t_{n+2}, y_{n+2}) - \frac{4}{3} f(t_{n+1}, y_{n+1}) + \frac{5}{12}f(t_n, y_n)\right)
+  \end{equation}
 
 \pagebreak
 \bibliography{biblio}
