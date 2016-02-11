@@ -28,6 +28,8 @@
 % \usepackage[square, numbers]{natbib}
 
 
+\titleformat{\section}{\Large\sffamily}{\thesection}{1em}{}
+
 \input{jpcommands.tex}
 
 
@@ -37,6 +39,11 @@
   \label{sec:Introduction}
   The Python code \texttt{linearshallowwater.py} models the linearised shallow
   water equations on the beta plane.
+  \begin{marginfigure}[1in]
+    \includegraphics{shallow_water}
+    \caption{The Shallow Water Configuration}
+    \label{fig:shallow}
+  \end{marginfigure}
   These are
   \begin{align}
     \dd{u}{t} - fv &= - g \dd{h}{x} \\
@@ -50,11 +57,25 @@
   the three-step Adams-Bashforth method.
   Appendix A \ref{sec:appendixa} details the numerical methods used.
 
+  The code can be run on either Python 2 or Python 3, the only additional requirements are the libraries \texttt{numpy} and \texttt{matplotlib}.
+  If you have not used Python on your computer before, you are unsure if you have the libraries, or if it's just been a long time since you used Python I recommend using one of the scientific distributions that are available to download.
+
+  The two main choices are Enthought Canopy and Contiuum Anaconda.
+  I use and recommend Anaconda; installing the latest version from the Continuum website \footnote{\url{https://www.continuum.io/downloads}} will give you the latest release of Python along with the most popular libraries \footnote{Notably \texttt{numpy}, \texttt{scipy}, \texttt{pandas}, \texttt{matplotlib}, \texttt{sympy} and \texttt{ipython}.  These six libraries will solve 99\% of numerical, statistical and dataprocessing needs.
+  A full list of included packages can be found on at \url{http://docs.continuum.io/anaconda/pkg-docs}.}.
+  Once the installer has been run, open a new terminal or command prompt window and you should have access to the new version of Python.
+
+  A standard text editor such a Notepad is all that is required to edit the code, but not a \emph{word processor} like Microsoft Word.
+  While Notepad is sufficient, there are many more powerful text editors available that make writing code a much more pleasant experience.
+  A free, cross-platform option with good support for Python is the Atom text editor \footnote{https://atom.io/}.
+
   \section{Experiments}
   \label{sec:Experiments}
 
-  \subsection{Experiment 1}
+  \subsection{Experiment 1: Gravity Waves}
   \label{sub:Experiment 1}
+
+  This will introduce you to the code and begin to explore
 
   \begin{itemize}
     \item Download the python script \texttt{linearshallowwater.py} from the
