@@ -1,12 +1,13 @@
 % !TEX program = pdflatex
 
-\documentclass[a4paper]{tufte-handout}
+\documentclass[a4paper, sfsidenotes, twoside]{tufte-handout}
 
 \author{James Penn}
 \title{A Shallow Water Model}
 
 
 %\hypersetup{colorlinks}                               % use non-coloured hyperlinks
+\urlstyle{sf}
 \usepackage{lmodern}                                  % allow arbitrary size fonts
 \usepackage[utf8]{inputenc}                           % allow UTF-8 formatting of source
 \usepackage[english]{babel}                           % use English typesetting rules
@@ -29,6 +30,7 @@
 
 
 \titleformat{\section}{\Large\sffamily}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\sffamily}{\thesubsection}{1em}{}
 
 \input{jpcommands.tex}
 
@@ -61,30 +63,73 @@
   If you have not used Python on your computer before, you are unsure if you have the libraries, or if it's just been a long time since you used Python I recommend using one of the scientific distributions that are available to download.
 
   The two main choices are Enthought Canopy and Contiuum Anaconda.
-  I use and recommend Anaconda; installing the latest version from the Continuum website \footnote{\url{https://www.continuum.io/downloads}} will give you the latest release of Python along with the most popular libraries \footnote{Notably \texttt{numpy}, \texttt{scipy}, \texttt{pandas}, \texttt{matplotlib}, \texttt{sympy} and \texttt{ipython}.  These six libraries will solve 99\% of numerical, statistical and dataprocessing needs.
-  A full list of included packages can be found on at \url{http://docs.continuum.io/anaconda/pkg-docs}.}.
+  I use and recommend Anaconda; installing the latest version from the Continuum website \footnote{\url{https://www.continuum.io/downloads}} will give you the latest release of Python along with the most popular libraries \footnote{Notably \texttt{numpy}, \texttt{scipy}, \texttt{pandas}, \texttt{matplotlib}, \texttt{sympy} and \texttt{ipython}.  These six libraries will solve 99\% of your numerical, statistical and dataprocessing needs.
+  A full list of included packages can be found at \url{http://docs.continuum.io/anaconda/pkg-docs}.}.
   Once the installer has been run, open a new terminal or command prompt window and you should have access to the new version of Python.
 
   A standard text editor such a Notepad is all that is required to edit the code, but not a \emph{word processor} like Microsoft Word.
   While Notepad is sufficient, there are many more powerful text editors available that make writing code a much more pleasant experience.
-  A free, cross-platform option with good support for Python is the Atom text editor \footnote{https://atom.io/}.
+  Atom  \footnote{\url{https://atom.io/}} is a free, cross-platform option text editor with good support for Python.
 
   \section{Experiments}
   \label{sec:Experiments}
 
-  \subsection{Experiment 1: Gravity Waves}
-  \label{sub:Experiment 1}
+  \subsection{Experiment 1: Geostrophic Balance in 1-D}
+  \label{sub:exp1}
 
-  This will introduce you to the code and begin to explore
+  An introduction to the code.  By the end you will have run an example of geostrophic adjustment in one dimension and have an understanding of how the code can be changed.
 
+  The first experiment shows demonstrates geostrophic adjustment in one dimension.
+  There is no variation in the y-direction and the system that is being modelled is
+  \begin{subequations}
+    \begin{align}
+      \dd{u}{t} &= fv - g \dd{h}{x} \\
+      \dd{v}{t} &= -fu \\
+      \dd{h}{t} &= -  H\dd{u}{x}
+    \end{align}
+  \end{subequations}
+  Given some initial conditions and sensible values for $g$, $H$ and $f$ the system will be solved numerically.
+  The intial conditions and constants are set
+  \begin{align*}
+    L_x &= \num{2e7} & H &= \num{100} & f &= \num{1e-5} & g &= \num{1} \\
+    u(0) &= 0  & v(0) &= 0 & h(0) &= \tanh(100 \cdot x / L_x)
+  \end{align*}
+  and the code is allowed to evolve in time, taking a timestep $\Delta t = 1000$.
+  \marginnote[-4em]{The code does not assume any units, but here the choice of constants scales the problem to be in [m] and [s].}
   \begin{itemize}
     \item Download the python script \texttt{linearshallowwater.py} from the
-    course website\footnote{\url{http://empslocal.ex.ac.uk/people/staff/gv219/ecmm719/index.html}}.
-    \item Set \texttt{experiment = '2d'} and run the code from the command line.
+    course website \footnote{\url{http://empslocal.ex.ac.uk/people/staff/gv219/ecmm719/index.html}}.
+    \item Open a terminal (Mac/Linux) or command prompt (Windows), change directory to the location of the saved file and run it with the \texttt{python} command.
     \begin{minted}[mathescape]{bash}
       $ cd Downloads
       $ python linearshallowwater.py
     \end{minted}
+    \begin{marginfigure}
+      \includegraphics{geostrophy}
+      \caption{A stepped height field undergoing geostrophic adjustment.}
+      \label{fig:1dgeo}
+    \end{marginfigure}
+    \item The code should begin to run and an animation window will appear (Figure \ref{fig:1dgeo}).  If you can't see the chart check:
+    \begin{itemize}
+      \item That it is not hidden behind another window.  Sometimes the python plotting window can be opened behind your terminal or text editor window.
+      \item That there are no errors on the command line.  If there are and you're not sure how to fix them, let me know.
+    \end{itemize}
+    \item Once you've got the code running, try changing some of the constants and see what happens.
+    \begin{itemize}
+      \item Set $f \gg \num{1e-5}$ and $f = \num{0}$. What happens in each of these cases? What happens to the gravity waves that radiate outwards?
+      \item If you want to see the simulation run longer, increase \texttt{nsteps} (found at around line \texttt{414}).
+    \end{itemize}
+  \end{itemize}
+
+
+
+
+  \subsection{Experiment 2: Gravity Waves in 2-D}
+  \label{sub:exp2}
+  Consider now the two-dimensional
+    \begin{itemize}
+    \item Set \texttt{experiment = '2d'} and run the code from the command line.
+
     \item You should see the case for a non-rotating fluid begin to run on
     your screen.  The height field is set with an initial condition of a small
     gaussian added to one point in the field.  As the equations evolve $u$ and
@@ -94,7 +139,10 @@
       \caption{Gravity waves propagating away from an initial disturbance.}
       \label{fig:gravwaves}
     \end{marginfigure}
-    \item Fin
+    \item Try changing the parameters of the code and see what happens.
+    \begin{itemize}
+      \item Set the boundaries to 'walls'
+    \end{itemize}
   \end{itemize}
 
   \section{Appendix A: Numerics}
