@@ -46,7 +46,7 @@
     \caption{The Shallow Water Configuration}
     \label{fig:shallow}
   \end{marginfigure}
-  These are
+  The equations being solved are
   \begin{subequations}
     \label{eqn:sw}
     \begin{align}
@@ -55,7 +55,7 @@
       \dd{h}{t} + H(\dd{u}{x} + \dd{v}{y}) &= 0
     \end{align}
   \end{subequations}
-  where fluid height $\eta = H + h$ and Coriolis parameter $f=f_0 + \beta y$.
+  where fluid height $\eta = H + h$, $g$ is gravity, and Coriolis parameter is $f=f_0 + \beta y$.
 
   The partial derivatives in space are approximated by a first-order central
   difference method and timestepping is performed using a linear-multistep method,
@@ -202,45 +202,46 @@ gr =  1.5e6                       # line 310
   \section{Appendix A: Numerics}
   \label{sec:appendixa}
 
-  \noindent The shallow water model uses finite difference methods to calculate
-  the derivatives in the spatial dimension.
+  \noindent This is a \emph{very} brief overview of the numerics used to implement the model.
+  If you are interested in learning more about numerical methods in GFD, Dale Durran's book is an excellent resource \cite{Durran:2010hy}.
 
-  In the simplest case, the domain $x \in [-L/2, L/2]$ is split into $N$
-  subdivisions, creating $N+1$ \emph{nodes} of distance $\Delta x = L/(N+1)$ apart.
-  We denote the positions of the nodes $x_0, x_1, ..., x_{N+1}$ where $x_j = j \Delta x$.
+  If you are interested in using this code to model a specific problem, there is an up-to-date customisable version online \footnote{\url{https://github.com/jamesp/shallowwater}}.
+  This repository has both the linear model and a fully nonlinear model of the shallow water equations.
 
+  \noindent The model implemented here uses finite difference methods to calculate the derivatives in the spatial dimension and the Adams-Bashforth three-step method to integrate forward in time.
+
+  \subsection{Spatial Derivatives}
+  \label{sub:spatialderivatives}
   For a continuous function $u(x)$ the definition of a derivative is
   \begin{equation}
-    \dd{u}{x} = \lim_{\Delta x \to 0} \frac{u(x + \Delta x) - u(x)}{\Delta x}
+    \label{}
+    \dd{u}{x} = \lim_{\Delta x \to 0} \frac{u(x - \Delta x) - u(x + \Delta x)}{2 \Delta x}
   \end{equation}
-  For our discrete model, at the node points $x_j$ described above we denote
-  the value of $u_j = u(x_j)$ and simply approximate the derivative by considering
-  only values at the closest node points
+  As computers cannot deal with smooth functions exactly, the domain must be discretised into a finite number of \emph{nodes}.
+  These nodes are denoted $x_j$ and spaced equally $\Delta x$ apart.
+  Denote the value of $u_j = u(x_j)$ then the derivative at point $x_j$ can be approximated by considering only the values of $u$ at nodes:
   \begin{equation}
     \label{eq:cendiff}
     \dd{u_j}{x} \simeq \frac{u_{j+1} - u_{j-1}}{2 \Delta x}
   \end{equation}
-  This is the \emph{central difference} method of calculating a spatial derivative
-  and is used extensively in this model.
+  This is the \emph{central difference} method of calculating a spatial derivative and is used extensively in this model.
   \begin{marginfigure}
     \includegraphics{cgrid}
     \caption{The Arakawa-C grid. From \citep{Arakawa:1981bx}}
     \label{fig:cgrid}
   \end{marginfigure}
-  Obviously, an error has been introduced here for any function other than a
+  Clearly, an error has been introduced here for any function other than a
   straight line, the error is proportional to $\Delta x$.
-  If $\Delta x$ is reduced ($N$ increases), error will be reduced but computing time will be
+  If $\Delta x$ is reduced, error will be reduced but computing time will be
   increased as to calculate the value of $u(x)$ across the domain requires
-  calculating the value at $(N+1)$ positions.
+  calculating the value at more nodes.
   The central-difference equation (\ref{eq:cendiff}) has a weakness - it is
   performed over a distance of $2 \Delta x$ and the new value at $u_i$ is
-  decoupled from the previous value at this point as it depends solely on
+  decoupled from the previous value at $u_i$ as it depends solely on
   values at neighbouring nodes.
 
-  For improved numerical stability, the locations of u, v and h values are
-  staggered in a configuration known as the \emph{Arakawa-C grid} (Figure~\ref{fig:cgrid}).
-  This distribution of value nodes means that, for example, the central difference
-  approximation
+  For improved numerical stability, the locations of $u$, $v$ and $h$ values are staggered in a configuration known as the \emph{Arakawa-C grid} (Figure~\ref{fig:cgrid}).
+  This distribution of value nodes means that, for example, the central difference approximation
   \begin{equation}
     \dd{h}{x} \simeq \frac{h_{i+1/2} - h_{i-1/2}}{\Delta x}
   \end{equation}
@@ -250,17 +251,14 @@ gr =  1.5e6                       # line 310
   the staggered configuration the dependency is on immediately adjacent values
   over a distance of $\Delta x$.
 
-  Consider the other spatial derivative terms in the shallow water equations.
-  How they can be approximated by a central difference method when using the
-  Arakawa-C grid?
-
+  \subsection{Time Derivatives}
+  \label{sub:timederiv}
 
   In simulating the shallow water equations we are essentially solving
   an initial value problem.
   Once the spatial derviatives have been approximated the equations can
-  be stepped forward in time in a similar manner to
-  This idea can be extended to thinking about derivatives in time also.
-  For example, the linear momentum equation can be discretised
+  be stepped forward in time.
+  The linear momentum equation can be discretised
   \begin{equation}
     \frac{u_j^{(n+1)} - u_j^{(n)}}{\Delta t} - fv_j^{(n)} = - \frac{\phi_{j+1}^{(n)} - \phi_{j-1}^{(n)}}{2 \Delta x}
   \end{equation}
@@ -290,9 +288,6 @@ gr =  1.5e6                       # line 310
     y_{n+2} &= y_{n+1} + \Delta t \left( \frac{3}{2}f(t_{n+1}, y_{n+1}) - \frac{1}{2}f(t_n, y_n) \right) \\
     y_{n+3} &= y_{n+2} + \Delta t \left( \frac{23}{12} f(t_{n+2}, y_{n+2}) - \frac{4}{3} f(t_{n+1}, y_{n+1}) + \frac{5}{12}f(t_n, y_n)\right) \\
   \end{align*}
-  For a comprehensive (and rigorous!) discussion of numerical methods in
-  geophysical fluids problems see Dale Durran's book \cite{Durran:2010hy}.
-
 
 \bibliography{biblio}
 \bibliographystyle{plainnat}
